@@ -1,0 +1,111 @@
+"use client";
+
+import { z } from "zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+import { Input } from "@/components/ui/input";
+import { Modal } from "@/components/ui/modals";
+import { Button } from "@/components/ui/button";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+
+import { useRouter } from "next/navigation";
+import { useUserStore } from "@/hooks/user-store";
+
+const formSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+});
+
+export const UserModal = () => {
+  const { setUser, isOpen, onClose } = useUserStore();
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: { name: "" },
+  });
+
+  
+const onSubmit = async (values: z.infer<typeof formSchema>) => {
+  try {
+    setLoading(true);
+
+    const response = await fetch("http://localhost:8000/users/create_user", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ username: values.name }),
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      if (data?.details) {
+        data.details.forEach((detail: any) => {
+          if (detail.loc?.some((loc: string) => loc === "username")) {
+            form.setError("name", { type: "manual", message: detail.msg });
+          }
+        });
+        return; // Exit early after handling validation errors
+      } else {
+        alert(data.error || "Something went wrong!");
+        throw new Error(data.error || "API request failed");
+      }
+    }
+
+    const userId = data?.id || Date.now().toString();
+    setUser(userId, values.name);
+    router.push(`/${userId}`);
+  } catch (error: any) {
+    console.error("[User-Create-modal] Error:", error);
+
+    if (error.message.includes("Failed to fetch")) {
+      alert("Cannot connect to server. Ensure the backend is running.");
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+  
+
+  return (
+    <Modal
+      title="Create User"
+      description="Add a new user"
+      isOpen={isOpen}
+      onClose={onClose}
+    >
+      <div className="space-y-4 py-2 pb-4">
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Name</FormLabel>
+                  <FormControl>
+                    <Input disabled={loading} placeholder="Username" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="pt-6 flex items-center justify-end space-x-2">
+              <Button className="cursor-pointer" disabled={loading} variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button className="cursor-pointer" disabled={loading} type="submit">
+                {loading ? "Processing..." : "Continue"}
+              </Button>
+            </div>
+          </form>
+        </Form>
+      </div>
+    </Modal>
+  );
+};
