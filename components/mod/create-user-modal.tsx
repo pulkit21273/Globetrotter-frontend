@@ -35,7 +35,7 @@ export const UserModal = () => {
     try {
       setLoading(true);
   
-      const response = await fetch("http://localhost:8000/users/create_user", {
+      const response = await fetch("https://globetrotter-l7o0.onrender.com/users/create_user", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

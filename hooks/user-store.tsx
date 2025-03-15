@@ -45,7 +45,7 @@ export const useUserStore = create<UserState>()(
         if (!userId) return;
       
         try {
-          const response = await fetch(`http://0.0.0.0:8000/game/score?user_id=${userId}`, {
+          const response = await fetch(`https://globetrotter-l7o0.onrender.com/game/score?user_id=${userId}`, {
             method: "GET",
             headers: {
               "Content-Type": "application/json",

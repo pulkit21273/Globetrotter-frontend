@@ -10,11 +10,10 @@ interface APIErrorDetail {
     loc?: string[];
     msg: string;
   }
-  
-// Function to create a user by making an API request
+
 const createUser = async (name: string) => {
   try {
-    const response = await fetch("http://localhost:8000/users/create_user", {
+    const response = await fetch("https://globetrotter-l7o0.onrender.com/users/create_user", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -24,30 +23,30 @@ const createUser = async (name: string) => {
 
     const data = await response.json();
     
-      
-      if (!response.ok) {
-        if (data?.details) {
-          data.details.forEach((detail: APIErrorDetail) => {
-            if (detail.loc?.some((loc: string) => loc === "username")) {
-              throw new Error(detail.msg); // Throw error for username validation
-            }
-          });
-          throw new Error(data.error || "Something went wrong!");
-        } else {
-          throw new Error(data.error || "API request failed");
-        }
-      }
-      
+    if (!response.ok) {
+      // Handle validation errors first
+      const usernameError = data?.details?.find((detail: APIErrorDetail) => 
+        detail.loc?.includes("username")
+      );
 
-    return data?.id || Date.now().toString(); // Return the created user ID
-  } catch (error: unknown) {
-    // Narrow the type of `error` to `Error`
-    if (error instanceof Error) {
-      alert(error.message || "Something went wrong!");
-    } else {
-      alert("Unknown error occurred!");
+      if (usernameError) {
+        // Return error object instead of throwing
+        return { error: usernameError.msg, isValidationError: true };
+      }
+      // Handle other API errors
+      return { error: data.error || "API request failed" };
     }
-    throw error; // Re-throw to allow other parts of the code to handle it
+
+    return { userId: data?.id || Date.now().toString() };
+  } catch (error: unknown) {
+    // Handle network errors
+    if (error instanceof Error) {
+      return { error: error.message.includes("Failed to fetch") 
+        ? "Cannot connect to server. Ensure the backend is running."
+        : "Something went wrong!" 
+      };
+    }
+    return { error: "Unknown error occurred!" };
   }
 };
 
@@ -115,6 +114,7 @@ export default function InviteFriend() {
             value={friendName}
             onChange={(e) => setFriendName(e.target.value)}
           />
+          
 
           <Button
             className="cursor-pointer"

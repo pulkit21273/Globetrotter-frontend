@@ -19,7 +19,7 @@ export default function HintButton({ clueId, onHintUsed }: HintButtonProps) {
 
     setLoading(true);
     try {
-      const response = await fetch(`http://0.0.0.0:8000/game/hint?clue_id=${clueId}`, {
+      const response = await fetch(`https://globetrotter-l7o0.onrender.com/game/hint?clue_id=${clueId}`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

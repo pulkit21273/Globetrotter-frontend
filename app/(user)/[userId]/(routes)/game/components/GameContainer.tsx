@@ -31,7 +31,7 @@ export default function GameContainer() {
   // ✅ Memoize fetchNewQuestion with useCallback
   const fetchNewQuestion = useCallback(async () => {
     try {
-      const response = await fetch("http://0.0.0.0:8000/game/question", {
+      const response = await fetch("https://globetrotter-l7o0.onrender.com/game/question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ destination_ids: answeredIds }),
@@ -65,7 +65,7 @@ export default function GameContainer() {
       setSelectedOption(optionId);
 
       try {
-        const response = await fetch("http://0.0.0.0:8000/game/correct_answer", {
+        const response = await fetch("https://globetrotter-l7o0.onrender.com/game/correct_answer", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
