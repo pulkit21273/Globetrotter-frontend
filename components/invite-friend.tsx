@@ -5,6 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
+
+interface APIErrorDetail {
+    loc?: string[];
+    msg: string;
+  }
+  
 // Function to create a user by making an API request
 const createUser = async (name: string) => {
   try {
@@ -17,18 +23,21 @@ const createUser = async (name: string) => {
     });
 
     const data = await response.json();
-    if (!response.ok) {
-      if (data?.details) {
-        data.details.forEach((detail: any) => {
-          if (detail.loc?.some((loc: string) => loc === "username")) {
-            throw new Error(detail.msg); // Throw error for username validation
-          }
-        });
-        throw new Error(data.error || "Something went wrong!");
-      } else {
-        throw new Error(data.error || "API request failed");
+    
+      
+      if (!response.ok) {
+        if (data?.details) {
+          data.details.forEach((detail: APIErrorDetail) => {
+            if (detail.loc?.some((loc: string) => loc === "username")) {
+              throw new Error(detail.msg); // Throw error for username validation
+            }
+          });
+          throw new Error(data.error || "Something went wrong!");
+        } else {
+          throw new Error(data.error || "API request failed");
+        }
       }
-    }
+      
 
     return data?.id || Date.now().toString(); // Return the created user ID
   } catch (error: unknown) {
@@ -43,7 +52,7 @@ const createUser = async (name: string) => {
 };
 
 export default function InviteFriend() {
-  const { userId, username, score } = useUserStore();
+  const {username, score } = useUserStore();
   const [friendName, setFriendName] = useState("");
   const [inviteLink, setInviteLink] = useState("");
   const [isLoading, setIsLoading] = useState(false);

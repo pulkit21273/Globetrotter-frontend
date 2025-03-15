@@ -15,7 +15,6 @@ interface AlertModalProps {
 export const AlertModal: React.FC<AlertModalProps> = ({
   isOpen,
   onClose,
-  onConfirm,
   loading,
   children
 }) => {

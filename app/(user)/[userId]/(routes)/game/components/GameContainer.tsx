@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import Confetti from "react-confetti";
@@ -11,7 +11,6 @@ import OptionsList from "./OptionsList";
 import Feedback from "./Feedback";
 import PlayAgain from "./PlayAgain";
 import HintButton from "./HintButton";
-
 
 type ResultState = {
   isCorrect: boolean;
@@ -27,18 +26,15 @@ export default function GameContainer() {
   const [result, setResult] = useState<ResultState>(null);
   const [answeredIds, setAnsweredIds] = useState<number[]>([]);
   const [showConfetti, setShowConfetti] = useState(false);
-  const [hintUsed, setHintUsed] = useState(false); // Track hint usage
+  const [hintUsed, setHintUsed] = useState(false);
 
-  useEffect(() => {
-    fetchNewQuestion();
-  }, []);
-
-  async function fetchNewQuestion() {
+  // ✅ Memoize fetchNewQuestion with useCallback
+  const fetchNewQuestion = useCallback(async () => {
     try {
       const response = await fetch("http://0.0.0.0:8000/game/question", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ destination_ids: [] }),
+        body: JSON.stringify({ destination_ids: answeredIds }),
       });
 
       if (!response.ok) {
@@ -52,48 +48,56 @@ export default function GameContainer() {
       setSelectedOption(null);
       setResult(null);
       setShowConfetti(false);
-      setHintUsed(false); // Reset hint usage when fetching a new question
+      setHintUsed(false);
     } catch (error) {
       console.error("Error fetching question:", error);
     }
-  }
+  }, [answeredIds]); // ✅ Only re-run when answeredIds change
 
-  async function checkAnswer(optionId: number) {
-    if (selectedOption) return;
-    setSelectedOption(optionId);
+  useEffect(() => {
+    fetchNewQuestion();
+  }, [fetchNewQuestion]); // ✅ Warning Fixed
 
-    try {
-      const response = await fetch("http://0.0.0.0:8000/game/correct_answer", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          clue_id: clues[0]?.id,
-          selected_option_id: optionId,
-          no_of_hints_used: hintUsed ? 1 : 0, // Send hint usage
-        }),
-      });
+  // ✅ Memoize checkAnswer with useCallback
+  const checkAnswer = useCallback(
+    async (optionId: number) => {
+      if (selectedOption) return;
+      setSelectedOption(optionId);
 
-      if (!response.ok) throw new Error("Failed to validate answer");
+      try {
+        const response = await fetch("http://0.0.0.0:8000/game/correct_answer", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            clue_id: clues[0]?.id,
+            selected_option_id: optionId,
+            no_of_hints_used: hintUsed ? 1 : 0,
+          }),
+        });
 
-      const data = await response.json();
+        if (!response.ok) throw new Error("Failed to validate answer");
 
-      setResult({
-        isCorrect: data.correct,
-        correctOptionId: data.correct_option_id,
-        funFact: data.fun_fact,
-      });
+        const data = await response.json();
 
-      if (data.correct) {
-        setShowConfetti(true);
+        setResult({
+          isCorrect: data.correct,
+          correctOptionId: data.correct_option_id,
+          funFact: data.fun_fact,
+        });
+
+        if (data.correct) {
+          setShowConfetti(true);
+        }
+
+        updateScore(data.user_score, data.correct_answers, data.incorrect_answers);
+        setAnsweredIds((prev) => [...prev, clues[0]?.id]);
+      } catch (error) {
+        console.error("Error validating answer:", error);
       }
-
-      updateScore(data.user_score, data.correct_answers, data.incorrect_answers);
-      setAnsweredIds((prev) => [...prev, clues[0]?.id]);
-    } catch (error) {
-      console.error("Error validating answer:", error);
-    }
-  }
+    },
+    [clues, hintUsed, selectedOption, updateScore, userId]
+  );
 
   return (
     <Card className="w-full max-w-lg">
@@ -110,4 +114,3 @@ export default function GameContainer() {
     </Card>
   );
 }
-

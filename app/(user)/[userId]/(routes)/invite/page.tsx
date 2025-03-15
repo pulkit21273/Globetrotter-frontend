@@ -33,11 +33,11 @@ function InvitePage() {
       <div className="text-center">
         <h1 className="text-4xl font-extrabold text-purple-300">Welcome, {userName}!</h1>
         <p className="text-lg text-[#191919] mt-2">
-          You're invited by <span className="font-semibold">{inviterFriend}</span> who scored{" "}
+          You&apos;re invited by <span className="font-semibold">{inviterFriend}</span> who scored{" "}
           <span className="font-semibold text-[#191919]"><span className="font-semibold">{score}</span></span>.
         </p>
         <p className="text-lg text-[#191919] mt-4">
-          Let's see if you can beat their score! 
+          Let&apos;s see if you can beat their score! 
         </p>
       </div>
 

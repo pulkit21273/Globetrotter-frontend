@@ -16,7 +16,10 @@ import { useUserStore } from "@/hooks/user-store";
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
 });
-
+interface APIErrorDetail {
+  loc?: string[];
+  msg: string;
+}
 export const UserModal = () => {
   const { setUser, isOpen, onClose } = useUserStore();
   const [loading, setLoading] = useState(false);
@@ -28,48 +31,56 @@ export const UserModal = () => {
   });
 
   
-const onSubmit = async (values: z.infer<typeof formSchema>) => {
-  try {
-    setLoading(true);
-
-    const response = await fetch("http://localhost:8000/users/create_user", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ username: values.name }),
-    });
-
-    const data = await response.json();
-    
-    if (!response.ok) {
-      if (data?.details) {
-        data.details.forEach((detail: any) => {
-          if (detail.loc?.some((loc: string) => loc === "username")) {
-            form.setError("name", { type: "manual", message: detail.msg });
-          }
-        });
-        return; // Exit early after handling validation errors
-      } else {
-        alert(data.error || "Something went wrong!");
-        throw new Error(data.error || "API request failed");
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      setLoading(true);
+  
+      const response = await fetch("http://localhost:8000/users/create_user", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ username: values.name }),
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        if (data?.details) {
+          data.details.forEach((detail: APIErrorDetail) => {
+            if (detail.loc?.includes("username")) {
+              form.setError("name", { type: "manual", message: detail.msg });
+            }
+          });
+          return; // Exit early after handling validation errors
+        } else {
+          throw new Error(data.error || "Something went wrong!");
+        }
       }
+  
+      if (!data?.id) {
+        throw new Error("User ID is missing in the API response.");
+      }
+  
+      setUser(data.id, values.name);
+      router.push(`/${data.id}`);
+    } catch (error: unknown) {
+      console.error("[User-Create-modal] Error:", error);
+  
+      if (error instanceof Error) {
+        if (error.message.includes("Failed to fetch")) {
+          alert("Cannot connect to server. Ensure the backend is running.");
+        } else {
+          alert(error.message);
+        }
+      } else {
+        alert("An unknown error occurred.");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    const userId = data?.id || Date.now().toString();
-    setUser(userId, values.name);
-    router.push(`/${userId}`);
-  } catch (error: any) {
-    console.error("[User-Create-modal] Error:", error);
-
-    if (error.message.includes("Failed to fetch")) {
-      alert("Cannot connect to server. Ensure the backend is running.");
-    }
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
+  
   
 
   return (

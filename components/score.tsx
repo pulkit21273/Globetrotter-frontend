@@ -8,7 +8,7 @@ function Score() {
 
   useEffect(() => {
     fetchUserStats();
-  }, []);
+  }, [fetchUserStats]);
 
   return (
     <div className="flex items-center justify-center space-x-6 bg-[#191919] px-4 py-2 rounded-xl shadow-md border border-[#121212] text-white h-14 min-w-100">

@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AlertModal } from "@/components/mod/alert-modal";
 
-const API_URL = "http://0.0.0.0:8000/game/hint"; 
 
 
 interface HintButtonProps {
