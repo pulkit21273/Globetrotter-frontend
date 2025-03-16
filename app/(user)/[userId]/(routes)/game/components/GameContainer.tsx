@@ -28,7 +28,8 @@ export default function GameContainer() {
   const [showConfetti, setShowConfetti] = useState(false);
   const [hintUsed, setHintUsed] = useState(false);
 
-  // ✅ Memoize fetchNewQuestion with useCallback
+  const [isFirstLoad, setIsFirstLoad] = useState(true);
+
   const fetchNewQuestion = useCallback(async () => {
     try {
       const response = await fetch("https://globetrotter-l7o0.onrender.com/game/question", {
@@ -36,13 +37,13 @@ export default function GameContainer() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ destination_ids: answeredIds }),
       });
-
+  
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
+  
       const data = await response.json();
-
+  
       setClues(data.clues_list);
       setOptions(data.options);
       setSelectedOption(null);
@@ -52,13 +53,17 @@ export default function GameContainer() {
     } catch (error) {
       console.error("Error fetching question:", error);
     }
-  }, [answeredIds]); // ✅ Only re-run when answeredIds change
-
+  }, [answeredIds]);
+  
+  //  Only fetch when the page loads for the first time
   useEffect(() => {
-    fetchNewQuestion();
-  }, [fetchNewQuestion]); // ✅ Warning Fixed
+    if (isFirstLoad) {
+      fetchNewQuestion();
+      setIsFirstLoad(false);
+    }
+  }, [isFirstLoad]);
+  
 
-  // ✅ Memoize checkAnswer with useCallback
   const checkAnswer = useCallback(
     async (optionId: number) => {
       if (selectedOption) return;

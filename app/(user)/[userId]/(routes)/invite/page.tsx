@@ -16,11 +16,12 @@ function InvitePage() {
   const inviterFriend =  searchParams.get("inviterFriend") ?? "";
   const score = searchParams.get("score") ?? "0"; 
 
-  const { setUser } = useUserStore();
+  const { setUser, fetchUserStats } = useUserStore();
 
   useEffect(() => {
     if (userId && userName) {
       setUser(userId, userName);
+      fetchUserStats();
     }
   }, [userId, userName, setUser, router]);
 

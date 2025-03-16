@@ -41,7 +41,7 @@ export default function GamePage() {
           color="blue" 
           items={[ 
             "You will be given clues to guess a destination.",
-            "You can use up to two hints.",
+            "You can use 1 hint.",
             "Select the correct answer from multiple options."
           ]} 
         />

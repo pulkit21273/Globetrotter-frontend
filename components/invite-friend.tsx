@@ -64,9 +64,9 @@ export default function InviteFriend() {
 
       // Create a new user (or retrieve their user ID if already exists)
       const invitedUserId = await createUser(friendName);
-
+      console.log("WTF",invitedUserId.userId )
       // Now generate the invite link with the userId of the inviter (creator)
-      const link = `${window.location.origin}/${invitedUserId}/invite?friend=${encodeURIComponent(friendName)}&score=${score}&inviterFriend=${username}`;
+      const link = `${window.location.origin}/${invitedUserId.userId}/invite?friend=${encodeURIComponent(friendName)}&score=${score}&inviterFriend=${username}`;
       setInviteLink(link);
     } catch (error) {
       console.error("Failed to create user or generate invite:", error);
